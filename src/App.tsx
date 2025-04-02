@@ -1,8 +1,8 @@
 import React from 'react';
 import './App.css';
 
-function App() {
-  const openGoogleDrive = () => {
+const App: React.FC = () => {
+  const openGoogleDrive = (): void => {
     window.open('https://drive.google.com', '_blank');
   };
 
@@ -19,6 +19,6 @@ function App() {
       </header>
     </div>
   );
-}
+};
 
 export default App;
