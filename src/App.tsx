@@ -1,23 +1,21 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 
 function App() {
+  const openGoogleDrive = () => {
+    window.open('https://drive.google.com', '_blank');
+  };
+
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+        <h1>Google Drive Launcher</h1>
+        <button 
+          onClick={openGoogleDrive}
+          className="drive-button"
         >
-          Learn React
-        </a>
+          Open Google Drive
+        </button>
       </header>
     </div>
   );
