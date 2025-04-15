@@ -9,12 +9,12 @@ const App: React.FC = () => {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Google Drive Launcher</h1>
+        <h1>Holding the governemnt accountable</h1>
         <button 
           onClick={openGoogleDrive}
           className="drive-button"
         >
-          Open Google Drive
+          Cheers Towards transparency
         </button>
       </header>
     </div>
