@@ -14,7 +14,7 @@ const App: React.FC = () => {
           onClick={openGoogleDrive}
           className="drive-button"
         >
-          Cheers Towards transparency
+          Cheers to transparency
         </button>
       </header>
     </div>
