@@ -18,8 +18,8 @@ interface Post {
   comments: Comment[];
 }
 
-// Use environment variable for backend URL in production
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+// Use relative API path for monorepo deployment
+const API_PREFIX = '/api';
 
 const App: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -31,7 +31,7 @@ const App: React.FC = () => {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch(`${BACKEND_URL}/api/all-posts`);
+        const res = await fetch(`${API_PREFIX}/all-posts`);
         const data = await res.json();
         setPosts(data.posts || []);
       } catch (err) {
