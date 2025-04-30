@@ -173,10 +173,10 @@ cron.schedule('0 * * * *', async () => {
 
 const PORT = process.env.PORT || 5000;
 
-// Remove app.listen for Vercel serverless deployment
+// ES module export for Vercel
+export default app;
+
+// Uncomment for local development
 // app.listen(PORT, () => {
 //   console.log(`Server running on port ${PORT}`);
 // });
-
-// ES module export for Vercel
-export default app;
