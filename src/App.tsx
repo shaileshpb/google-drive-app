@@ -1,57 +1,94 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 
-const App: React.FC = () => {
-  // State for like/dislike and comments
-  const [likes, setLikes] = useState(0);
-  const [dislikes, setDislikes] = useState(0);
-  const [comments, setComments] = useState<string[]>([]);
-  const [commentInput, setCommentInput] = useState('');
+interface Comment {
+  user: string;
+  avatar: string;
+  comment: string;
+  favor: boolean;
+}
 
-  const handleLike = () => setLikes(likes + 1);
-  const handleDislike = () => setDislikes(dislikes + 1);
-  const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => setCommentInput(e.target.value);
-  const handleCommentSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (commentInput.trim()) {
-      setComments([...comments, commentInput.trim()]);
-      setCommentInput('');
+interface Post {
+  timestamp: string;
+  title: string;
+  image: string;
+  url: string;
+  likes: number;
+  dislikes: number;
+  comments: Comment[];
+}
+
+// Use environment variable for backend URL in production
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+
+const App: React.FC = () => {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    async function fetchAllPosts() {
+      setLoading(true);
+      setError('');
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/all-posts`);
+        const data = await res.json();
+        setPosts(data.posts || []);
+      } catch (err) {
+        setError('Failed to load posts.');
+      } finally {
+        setLoading(false);
+      }
     }
-  };
+    fetchAllPosts();
+  }, []);
+
+  if (loading) return <div className="App"><div className="post-tile">Loading...</div></div>;
+  if (error) return <div className="App"><div className="post-tile">{error}</div></div>;
+  if (!posts || posts.length === 0) return <div className="App"><div className="post-tile">No posts available yet.</div></div>;
 
   return (
     <div className="App">
-      <div className="post-tile">
-        <img
-          src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80"
-          alt="Post"
-          className="post-image"
-        />
-        <div className="post-content">
-          <h2 className="post-title">Holding the government accountable</h2>
-          <div className="post-actions">
-            <button className="like-btn" onClick={handleLike} aria-label="Like">👍 {likes}</button>
-            <button className="dislike-btn" onClick={handleDislike} aria-label="Dislike">👎 {dislikes}</button>
+      {posts.map((post, idx) => {
+        const comments = Array.isArray(post.comments) ? post.comments : [];
+        return (
+          <div className="post-tile" key={idx}>
+            <img
+              src={post.image}
+              alt="Post"
+              className="post-image"
+              onError={e => (e.currentTarget.src = 'https://placehold.co/400x400?text=No+Image')}
+            />
+            <div className="post-content">
+              <h2 className="post-title">
+                <a href={post.url} target="_blank" rel="noopener noreferrer" style={{ color: '#222', textDecoration: 'none' }}>{post.title}</a>
+              </h2>
+              <div className="post-actions">
+                <button className="like-btn" disabled>👍 {typeof post.likes === 'number' ? post.likes : 0}</button>
+                <button className="dislike-btn" disabled>👎 {typeof post.dislikes === 'number' ? post.dislikes : 0}</button>
+              </div>
+              <div className="post-comments">
+                <div style={{ fontWeight: 500, marginBottom: 6 }}>Comments</div>
+                <ul className="comments-list">
+                  {comments && comments.length > 0 ? (
+                    comments.map((comment, idx2) => (
+                      <li key={idx2} className="comment-item">
+                        <span style={{ marginRight: 8 }}>{comment.avatar}</span>
+                        <b>{comment.user}:</b> {comment.comment}
+                        <span style={{ color: comment.favor ? '#228B22' : '#B22222', marginLeft: 8 }}>
+                          {comment.favor ? '👍' : '👎'}
+                        </span>
+                      </li>
+                    ))
+                  ) : (
+                    <li style={{ color: '#888', fontStyle: 'italic' }}>No comments yet.</li>
+                  )}
+                </ul>
+              </div>
+            </div>
           </div>
-          <div className="post-comments">
-            <form onSubmit={handleCommentSubmit} className="comment-form">
-              <input
-                type="text"
-                value={commentInput}
-                onChange={handleCommentChange}
-                placeholder="Add a comment..."
-                className="comment-input"
-              />
-              <button type="submit" className="comment-submit">Post</button>
-            </form>
-            <ul className="comments-list">
-              {comments.map((comment, idx) => (
-                <li key={idx} className="comment-item">{comment}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
+        );
+      })}
     </div>
   );
 };
