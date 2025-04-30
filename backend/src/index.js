@@ -16,14 +16,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Google Sheets Setup
-const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
-const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || './google-credentials.json';
+// Google Auth Setup
+const credentials = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
+  ? JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+  : undefined;
 
 function getAuth() {
-  const credentials = JSON.parse(fs.readFileSync(credentialsPath));
-  const { client_email, private_key } = credentials;
-  return new google.auth.JWT(client_email, null, private_key, SCOPES);
+  return new google.auth.GoogleAuth({
+    credentials,
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  });
 }
 
 const sheets = google.sheets({ version: 'v4' });
@@ -52,8 +54,7 @@ export function simulateEngagement(newsTitle) {
 // Test endpoint: Get first 5 rows from the sheet
 app.get('/api/test-sheet', async (req, res) => {
   try {
-    const auth = getAuth();
-    await auth.authorize();
+    const auth = await getAuth();
     const response = await sheets.spreadsheets.values.get({
       auth,
       spreadsheetId,
@@ -73,8 +74,7 @@ app.get('/api/test-sheet', async (req, res) => {
 // Endpoint to manually trigger post creation (for now)
 app.post('/api/generate-post', async (req, res) => {
   try {
-    const auth = getAuth();
-    await auth.authorize();
+    const auth = await getAuth();
     const articles = await fetchTrendingIndianNews();
     if (!articles.length) throw new Error('No trending news found');
     const top = articles[0];
@@ -106,8 +106,7 @@ app.post('/api/generate-post', async (req, res) => {
 // Endpoint to fetch the latest post
 app.get('/api/latest-post', async (req, res) => {
   try {
-    const auth = getAuth();
-    await auth.authorize();
+    const auth = await getAuth();
     const response = await sheets.spreadsheets.values.get({
       auth,
       spreadsheetId,
@@ -138,8 +137,7 @@ app.get('/api/latest-post', async (req, res) => {
 // Endpoint to fetch all posts
 app.get('/api/all-posts', async (req, res) => {
   try {
-    const auth = getAuth();
-    await auth.authorize();
+    const auth = await getAuth();
     const response = await sheets.spreadsheets.values.get({
       auth,
       spreadsheetId,
@@ -171,6 +169,10 @@ cron.schedule('0 * * * *', async () => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Backend server running on port ${PORT}`);
-});
+
+// Remove app.listen for Vercel serverless deployment
+// app.listen(PORT, () => {
+//   console.log(`Server running on port ${PORT}`);
+// });
+
+module.exports = app;
