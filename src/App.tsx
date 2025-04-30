@@ -33,7 +33,14 @@ const App: React.FC = () => {
       try {
         const res = await fetch(`${API_PREFIX}/all-posts`);
         const data = await res.json();
-        setPosts(data.posts || []);
+        // Sort posts by timestamp descending (most recent first)
+        const sortedPosts = (data.posts || []).slice().sort((a: Post, b: Post) => {
+          // Try to parse timestamps as dates
+          const dateA = new Date(a.timestamp).getTime();
+          const dateB = new Date(b.timestamp).getTime();
+          return dateB - dateA;
+        });
+        setPosts(sortedPosts);
       } catch (err) {
         setError('Failed to load posts.');
       } finally {
