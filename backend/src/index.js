@@ -20,8 +20,10 @@ app.use(express.json());
 let credentials;
 if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
   credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
-} else {
+} else if (process.env.NODE_ENV !== 'production') {
   credentials = JSON.parse(fs.readFileSync('./backend/google-credentials.json'));
+} else {
+  throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON is not set. This is required for production (Vercel).');
 }
 
 function getAuth() {
