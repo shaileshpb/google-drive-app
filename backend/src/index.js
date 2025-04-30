@@ -16,10 +16,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Google Auth Setup
-const credentials = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON
-  ? JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
-  : undefined;
+// Google Auth Setup - support both Vercel (env) and local (file)
+let credentials;
+if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+  credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+} else {
+  credentials = JSON.parse(fs.readFileSync('./backend/google-credentials.json'));
+}
 
 function getAuth() {
   return new google.auth.GoogleAuth({
