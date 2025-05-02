@@ -1,4 +1,4 @@
-import React, { useEffect, useState, ChangeEvent, useRef } from 'react';
+import React, { useEffect, useState, ChangeEvent } from 'react';
 import './App.css';
 
 interface Comment {
