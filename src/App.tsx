@@ -35,27 +35,29 @@ const App: React.FC = () => {
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    async function fetchAllPosts() {
-      setLoading(true);
-      setError('');
-      try {
-        const res = await fetch(`${API_PREFIX}/all-posts`);
-        const data = await res.json();
-        // Sort posts by timestamp descending (most recent first)
-        const sortedPosts = (data.posts || []).slice().sort((a: Post, b: Post) => {
-          // Try to parse timestamps as dates
-          const dateA = new Date(a.timestamp).getTime();
-          const dateB = new Date(b.timestamp).getTime();
-          return dateB - dateA;
-        });
-        setPosts(sortedPosts);
-      } catch (err) {
-        setError('Failed to load posts.');
-      } finally {
-        setLoading(false);
-      }
+  // Move fetchAllPosts to top-level so it can be used in multiple hooks
+  async function fetchAllPosts() {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_PREFIX}/all-posts`);
+      const data = await res.json();
+      // Sort posts by timestamp descending (most recent first)
+      const sortedPosts = (data.posts || []).slice().sort((a: Post, b: Post) => {
+        // Try to parse timestamps as dates
+        const dateA = new Date(a.timestamp).getTime();
+        const dateB = new Date(b.timestamp).getTime();
+        return dateB - dateA;
+      });
+      setPosts(sortedPosts);
+    } catch (err) {
+      setError('Failed to load posts.');
+    } finally {
+      setLoading(false);
     }
+  }
+
+  useEffect(() => {
     fetchAllPosts();
   }, []);
 
