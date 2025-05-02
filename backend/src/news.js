@@ -42,74 +42,37 @@ export async function fetchTrendingIndianNews() {
 
   // Try everything endpoint first with a focused query for daily public issues
   try {
-    const params = {
-      q: [
-        'bad road condition',
-        'road accident',
-        'poor infrastructure',
-        'bad quality education',
-        'poor healthcare',
-        'disease outbreak',
-        'air pollution',
-        'water pollution',
-        'police corruption',
-        'political corruption',
-        'electricity outage',
-        'water shortage',
-        'civic issue',
-        'public grievance',
-        'government complaint',
-        'sanitation issue',
-        'garbage problem',
-        'municipal failure',
-        'school infrastructure',
-        'hospital negligence',
-        'unsafe roads',
-        'unsafe bridges',
-        'potholes',
-        'traffic jam',
-        'public transport issue',
-        'drinking water issue',
-        'flooding',
-        'sewage issue',
-        'crime rise',
-        'unemployment',
-        'inflation',
-        'ration shortage',
-        'power cut',
-        'slum issue',
-        'illegal construction',
-        'encroachment',
-        'child labour',
-        'women safety',
-        'elderly abuse',
-        'public protest',
-        'strike',
-        'farmer protest',
-        'public safety',
-        'malnutrition',
-        'public hospital issue',
-        'government scheme failure',
-        'ration card issue',
-        'public interest litigation',
-        'RTI',
-        'corruption',
-        'government response'
-      ].join(' OR '),
-      language: 'en',
-      apiKey: NEWSAPI_KEY,
-      sortBy: 'publishedAt',
-      pageSize: 10,
-      domains: indianNewsDomains,
-    };
-    const response = await axios.get(EVERYTHING_URL, { params });
-    articles = (response.data.articles || []).filter((a) => {
-      const text = `${a.title || ''} ${a.description || ''}`.toLowerCase();
-      // Must have at least one positive keyword and NOT match any negative keyword
-      const hasPositive = true; // Already filtered by query
-      const hasNegative = negativeKeywords.some(k => text.includes(k));
-      return a.urlToImage && a.url && hasPositive && !hasNegative;
-    });
+    // Instead of a single long query, break into smaller requests and merge results
+    const queries = [
+      'bad road condition OR road accident OR unsafe roads OR potholes OR unsafe bridges',
+      'poor infrastructure OR municipal failure OR public transport issue OR traffic jam OR flooding OR sewage issue OR sanitation issue OR garbage problem',
+      'bad quality education OR school infrastructure OR public hospital issue OR hospital negligence OR malnutrition',
+      'poor healthcare OR disease outbreak OR women safety OR elderly abuse OR child labour',
+      'air pollution OR water pollution OR drinking water issue',
+      'police corruption OR political corruption OR corruption OR government complaint OR government scheme failure OR government response OR RTI',
+      'electricity outage OR power cut OR water shortage OR ration shortage OR ration card issue',
+      'civic issue OR public grievance OR public interest litigation',
+      'crime rise OR public safety OR public protest OR strike OR farmer protest OR unemployment OR inflation OR slum issue OR illegal construction OR encroachment',
+    ];
+    for (const q of queries) {
+      const params = {
+        q,
+        language: 'en',
+        apiKey: NEWSAPI_KEY,
+        sortBy: 'publishedAt',
+        pageSize: 5,
+        domains: indianNewsDomains,
+      };
+      const response = await axios.get(EVERYTHING_URL, { params });
+      const newArticles = (response.data.articles || []).filter((a) => {
+        const text = `${a.title || ''} ${a.description || ''}`.toLowerCase();
+        const hasNegative = negativeKeywords.some(k => text.includes(k));
+        return a.urlToImage && a.url && !hasNegative;
+      });
+      articles.push(...newArticles);
+      // Stop early if we have enough articles
+      if (articles.length >= 10) break;
+    }
   } catch (err) {
     console.error('Error fetching daily public issues news:', err.response?.data || err.message);
   }

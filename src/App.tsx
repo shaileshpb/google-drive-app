@@ -59,6 +59,14 @@ const App: React.FC = () => {
     fetchAllPosts();
   }, []);
 
+  // Periodically refresh posts every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchAllPosts();
+    }, 30000); // 30 seconds
+    return () => clearInterval(interval);
+  }, []);
+
   // New post image preview handler
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
