@@ -11,6 +11,7 @@
     { "src": "/manifest.json", "dest": "/manifest.json" },
     { "src": "/favicon.ico", "dest": "/favicon.ico" },
     { "src": "/robots.txt", "dest": "/robots.txt" },
+    { "src": "/user-avatar.png", "dest": "/user-avatar.png" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
