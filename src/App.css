@@ -159,6 +159,11 @@
   color: #333;
 }
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 @media (max-width: 480px) {
   .post-tile {
     max-width: 98vw;

@@ -8,13 +8,14 @@ import { fetchTrendingIndianNews } from './news.js';
 import { DUMMY_USERS, FAVOR_COMMENTS, DISFAVOR_COMMENTS } from './dummyUsers.js';
 import { scheduledPostJob } from './scheduler.js';
 import cron from 'node-cron';
+import { Readable } from 'stream';
 
 // Load env vars
 dotenv.config();
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '8mb' }));
 
 // Google Auth Setup - support both Vercel (env) and local (file)
 let credentials;
@@ -29,11 +30,12 @@ if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
 function getAuth() {
   return new google.auth.GoogleAuth({
     credentials,
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    scopes: ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'],
   });
 }
 
 const sheets = google.sheets({ version: 'v4' });
+const drive = google.drive({ version: 'v3' });
 const spreadsheetId = process.env.SPREADSHEET_ID;
 
 // Helper to pick a random element
@@ -54,6 +56,23 @@ export function simulateEngagement(newsTitle) {
     ...disfavorUsers.map(u => ({ user: u.name, avatar: u.avatar, comment: pick(DISFAVOR_COMMENTS), favor: false })),
   ];
   return { likes, dislikes, comments };
+}
+
+// Helper: Upload image to ImgBB and return the direct URL
+async function uploadImageToImgBB(base64Image) {
+  const apiKey = '3301acabcb4ee1f08ca6e16a257de278';
+  const form = new URLSearchParams();
+  form.append('key', apiKey);
+  form.append('image', base64Image);
+
+  const res = await fetch('https://api.imgbb.com/1/upload', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: form.toString(),
+  });
+  const data = await res.json();
+  if (!data.success) throw new Error('ImgBB upload failed: ' + (data.error?.message || 'Unknown error'));
+  return data.data.url;
 }
 
 // Test endpoint: Get first 5 rows from the sheet
@@ -167,6 +186,46 @@ app.get('/api/all-posts', async (req, res) => {
   }
 });
 
+// Endpoint for user to post a new news item
+app.post('/api/user-post', async (req, res) => {
+  try {
+    const { title, image, url } = req.body;
+    if (!title || !image) {
+      return res.status(400).json({ error: 'Title and image are required.' });
+    }
+    let imageUrl = '';
+    if (image) {
+      // Remove data URL prefix if present
+      const base64 = image.replace(/^data:image\/(png|jpeg|jpg);base64,/, '');
+      imageUrl = await uploadImageToImgBB(base64);
+    }
+    // Simulate dummy engagement for user post
+    const engagement = simulateEngagement(title);
+    // Prepare row: [timestamp, title, image, url, likes, dislikes, comments (JSON)]
+    const row = [
+      new Date().toISOString(),
+      title,
+      imageUrl,
+      url,
+      engagement.likes,
+      engagement.dislikes,
+      JSON.stringify(engagement.comments)
+    ];
+    const auth = await getAuth();
+    await sheets.spreadsheets.values.append({
+      auth,
+      spreadsheetId,
+      range: 'Sheet1',
+      valueInputOption: 'USER_ENTERED',
+      requestBody: { values: [row] }
+    });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('User post error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Schedule post creation every hour
 cron.schedule('0 * * * *', async () => {
   console.log('[CRON] Running scheduled post job...');
@@ -179,6 +238,6 @@ const PORT = process.env.PORT || 5000;
 export default app;
 
 // Uncomment for local development
-// app.listen(PORT, () => {
-//   console.log(`Server running on port ${PORT}`);
-// });
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
