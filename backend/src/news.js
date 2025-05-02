@@ -56,7 +56,7 @@ export async function fetchTrendingIndianNews() {
     ];
     for (const q of queries) {
       const params = {
-        q,
+        q: `india AND (${q})`, // Ensure 'india' is always in the query
         language: 'en',
         apiKey: NEWSAPI_KEY,
         sortBy: 'publishedAt',
