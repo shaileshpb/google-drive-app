@@ -161,7 +161,7 @@ const App: React.FC = () => {
         }),
       });
       if (!res.ok) throw new Error('Failed to post news');
-      const data = await res.json();
+      await res.json();
       // Create the new post object (simulate as backend returns only success)
       const newPost: Post = {
         timestamp: new Date().toISOString(),
