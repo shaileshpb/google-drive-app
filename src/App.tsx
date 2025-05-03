@@ -1,5 +1,6 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
 import './App.css';
+import { GoogleAuth } from './GoogleAuth';
 
 interface Comment {
   user: string;
@@ -33,7 +34,28 @@ const App: React.FC = () => {
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState('');
 
+  // --- Authentication State ---
+  const [user, setUser] = useState<{ email: string; name: string; picture: string } | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Handle Google login success
+  const handleGoogleLogin = async (credential: string) => {
+    try {
+      const res = await fetch(`${API_PREFIX}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential }),
+      });
+      if (!res.ok) throw new Error('Auth failed');
+      const data = await res.json();
+      setUser({ email: data.email, name: data.name, picture: data.picture });
+      setAuthError(null);
+    } catch (e) {
+      setAuthError('Google authentication failed.');
+    }
+  };
 
   // Move fetchAllPosts to top-level so it can be used in multiple hooks
   async function fetchAllPosts() {
@@ -133,6 +155,17 @@ const App: React.FC = () => {
     setPostError('');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
+
+  // --- UI: Show Google Login if not authenticated ---
+  if (!user) {
+    return (
+      <div className="App">
+        <h2>Sign in to Direct Democracy</h2>
+        <GoogleAuth onSuccess={handleGoogleLogin} onError={() => setAuthError('Google authentication failed.')} />
+        {authError && <div style={{ color: 'red' }}>{authError}</div>}
+      </div>
+    );
+  }
 
   if (loading) return <div className="App"><div className="post-tile">Loading...</div></div>;
   if (error) return <div className="App"><div className="post-tile">{error}</div></div>;

@@ -9,6 +9,7 @@ import { DUMMY_USERS, FAVOR_COMMENTS, DISFAVOR_COMMENTS } from './dummyUsers.js'
 import { scheduledPostJob } from './scheduler.js';
 import cron from 'node-cron';
 import { Readable } from 'stream';
+import authRouter from './auth.js';
 
 // Load env vars
 dotenv.config();
@@ -225,6 +226,8 @@ app.post('/api/user-post', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+app.use('/api/auth', authRouter);
 
 // Schedule post creation every hour
 cron.schedule('0 * * * *', async () => {
