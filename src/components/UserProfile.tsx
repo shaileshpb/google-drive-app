@@ -5,11 +5,12 @@ interface UserProfileProps {
     name: string;
     email: string;
     picture?: string;
-    createdAt: string;
+    createdAt?: string;
   };
 }
 
-function daysSince(dateString: string) {
+function daysSince(dateString?: string) {
+  if (!dateString) return '?';
   const created = new Date(dateString);
   const now = new Date();
   const diff = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
@@ -23,7 +24,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
         {user.picture && <img src={user.picture} alt={user.name} className="user-profile-avatar" />}
         <h2>{user.name}</h2>
         <p className="user-profile-email">{user.email}</p>
-        <p className="user-profile-member-since">Member since: <b>{daysSince(user.createdAt)}</b> days</p>
+        <p className="user-profile-member-since">Member since: <b>{user.createdAt ? daysSince(user.createdAt) : '?'}</b> days</p>
       </div>
     </div>
   );
