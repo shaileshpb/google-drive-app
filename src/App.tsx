@@ -159,10 +159,14 @@ const App: React.FC = () => {
   // --- UI: Show Google Login if not authenticated ---
   if (!user) {
     return (
-      <div className="App">
-        <h2>Sign in to Direct Democracy</h2>
-        <GoogleAuth onSuccess={handleGoogleLogin} onError={() => setAuthError('Google authentication failed.')} />
-        {authError && <div style={{ color: 'red' }}>{authError}</div>}
+      <div className="App auth-center">
+        <div className="auth-card">
+          <img src="/logo192.png" alt="Direct Democracy Logo" className="auth-logo" />
+          <h2>Sign in to <span className="highlight">Direct Democracy</span></h2>
+          <p className="auth-desc">Welcome! Sign in with your Google account to join the conversation and share your voice.</p>
+          <GoogleAuth onSuccess={handleGoogleLogin} onError={() => setAuthError('Google authentication failed.')} />
+          {authError && <div className="auth-error">{authError}</div>}
+        </div>
       </div>
     );
   }
