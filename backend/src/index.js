@@ -190,7 +190,7 @@ app.get('/api/all-posts', async (req, res) => {
 // Endpoint for user to post a new news item
 app.post('/api/user-post', async (req, res) => {
   try {
-    const { title, image, url } = req.body;
+    const { title, image, url, userName } = req.body;
     if (!title || !image) {
       return res.status(400).json({ error: 'Title and image are required.' });
     }
@@ -202,12 +202,13 @@ app.post('/api/user-post', async (req, res) => {
     }
     // Simulate dummy engagement for user post
     const engagement = simulateEngagement(title);
-    // Prepare row: [timestamp, title, image, url, likes, dislikes, comments (JSON)]
+    // Prepare row: [timestamp, title, image, url, userName, likes, dislikes, comments (JSON)]
     const row = [
       new Date().toISOString(),
       title,
       imageUrl,
       url,
+      userName || '',
       engagement.likes,
       engagement.dislikes,
       JSON.stringify(engagement.comments)

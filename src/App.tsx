@@ -1,6 +1,8 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
 import './App.css';
 import { GoogleAuth } from './GoogleAuth';
+import UserMenu from './components/UserMenu';
+import UserProfile from './components/UserProfile';
 
 interface Comment {
   user: string;
@@ -17,6 +19,7 @@ interface Post {
   likes: number;
   dislikes: number;
   comments: Comment[];
+  userName?: string;
 }
 
 // Use relative API path for monorepo deployment
@@ -37,6 +40,8 @@ const App: React.FC = () => {
   // --- Authentication State ---
   const [user, setUser] = useState<{ email: string; name: string; picture: string } | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
+
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -122,6 +127,7 @@ const App: React.FC = () => {
         body: JSON.stringify({
           title: newPostText,
           image: newPostImage,
+          userName: user?.name || '',
         }),
       });
       if (!res.ok) throw new Error('Failed to post news');
@@ -171,12 +177,24 @@ const App: React.FC = () => {
     );
   }
 
+  // --- UI: Show user profile page if open ---
+  if (profileOpen && user) {
+    return <UserProfile user={user} />;
+  }
+
   if (loading) return <div className="App"><div className="post-tile">Loading...</div></div>;
   if (error) return <div className="App"><div className="post-tile">{error}</div></div>;
   if (!posts || posts.length === 0) return <div className="App"><div className="post-tile">No posts available yet.</div></div>;
 
   return (
     <div className="App">
+      {/* Top bar with user menu */}
+      <header className="app-header">
+        <h1 className="app-title">Direct Democracy</h1>
+        <div className="app-header-right">
+          <UserMenu user={user} onProfile={() => setProfileOpen(true)} />
+        </div>
+      </header>
       {/* New Post UI */}
       <div className="new-post-box" style={{ background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px #eee', padding: 20, margin: '24px auto 24px auto', maxWidth: 600 }}>
         {!showNewPost ? (
@@ -210,55 +228,53 @@ const App: React.FC = () => {
         )}
       </div>
       {/* Posts Feed */}
-      {posts.map((post, idx) => {
-        const comments = Array.isArray(post.comments) ? post.comments : [];
-        return (
-          <div className="post-tile" key={idx}>
-            <img
-              src={post.image}
-              alt="Post"
-              className="post-image"
-              style={{ border: '1px solid #ccc', background: '#fafafa', minHeight: 200, minWidth: 200 }}
-              onError={e => {
-                const img = e.currentTarget as HTMLImageElement | null;
-                if (!img) return;
-                img.src = 'https://placehold.co/400x400?text=No+Image';
-              }}
-            />
-            <div className="post-content">
-              <h2 className="post-title">
-                <a href={post.url} target="_blank" rel="noopener noreferrer" style={{ color: '#222', textDecoration: 'none' }}>{post.title}</a>
-              </h2>
-              {/* Show time below title */}
-              <div className="post-timestamp" style={{ color: '#888', fontSize: 14, marginBottom: 8 }}>
-                {post.timestamp ? new Date(post.timestamp).toLocaleString() : ''}
-              </div>
-              <div className="post-actions">
-                <button className="like-btn" disabled>👍 {typeof post.likes === 'number' ? post.likes : 0}</button>
-                <button className="dislike-btn" disabled>👎 {typeof post.dislikes === 'number' ? post.dislikes : 0}</button>
-              </div>
-              <div className="post-comments">
-                <div style={{ fontWeight: 500, marginBottom: 6 }}>Comments</div>
-                <ul className="comments-list">
-                  {comments && comments.length > 0 ? (
-                    comments.map((comment, idx2) => (
-                      <li key={idx2} className="comment-item">
-                        <span style={{ marginRight: 8 }}>{comment.avatar}</span>
-                        <b>{comment.user}:</b> {comment.comment}
-                        <span style={{ color: comment.favor ? '#228B22' : '#B22222', marginLeft: 8 }}>
-                          {comment.favor ? '👍' : '👎'}
-                        </span>
-                      </li>
-                    ))
-                  ) : (
-                    <li style={{ color: '#888', fontStyle: 'italic' }}>No comments yet.</li>
-                  )}
-                </ul>
-              </div>
+      {posts.map((post, idx) => (
+        <div className="post-tile" key={idx}>
+          <img
+            src={post.image}
+            alt="Post"
+            className="post-image"
+            style={{ border: '1px solid #ccc', background: '#fafafa', minHeight: 200, minWidth: 200 }}
+            onError={e => {
+              const img = e.currentTarget as HTMLImageElement | null;
+              if (!img) return;
+              img.src = 'https://placehold.co/400x400?text=No+Image';
+            }}
+          />
+          <div className="post-content">
+            <h2 className="post-title">
+              <a href={post.url} target="_blank" rel="noopener noreferrer" style={{ color: '#222', textDecoration: 'none' }}>{post.title}</a>
+            </h2>
+            {post.userName && <div className="post-user">By {post.userName}</div>}
+            {/* Show time below title */}
+            <div className="post-timestamp" style={{ color: '#888', fontSize: 14, marginBottom: 8 }}>
+              {post.timestamp ? new Date(post.timestamp).toLocaleString() : ''}
+            </div>
+            <div className="post-actions">
+              <button className="like-btn" disabled>👍 {typeof post.likes === 'number' ? post.likes : 0}</button>
+              <button className="dislike-btn" disabled>👎 {typeof post.dislikes === 'number' ? post.dislikes : 0}</button>
+            </div>
+            <div className="post-comments">
+              <div style={{ fontWeight: 500, marginBottom: 6 }}>Comments</div>
+              <ul className="comments-list">
+                {post.comments && post.comments.length > 0 ? (
+                  post.comments.map((comment, idx2) => (
+                    <li key={idx2} className="comment-item">
+                      <span style={{ marginRight: 8 }}>{comment.avatar}</span>
+                      <b>{comment.user}:</b> {comment.comment}
+                      <span style={{ color: comment.favor ? '#228B22' : '#B22222', marginLeft: 8 }}>
+                        {comment.favor ? '👍' : '👎'}
+                      </span>
+                    </li>
+                  ))
+                ) : (
+                  <li style={{ color: '#888', fontStyle: 'italic' }}>No comments yet.</li>
+                )}
+              </ul>
             </div>
           </div>
-        );
-      })}
+        </div>
+      ))}
     </div>
   );
 };
