@@ -334,7 +334,6 @@ const App: React.FC = () => {
                 {post.comments && post.comments.length > 0 ? (
                   post.comments.map((comment, idx2) => (
                     <li key={idx2} className="comment-item">
-                      <span style={{ marginRight: 8 }}>{comment.avatar}</span>
                       <b>{comment.user}:</b> {comment.comment}
                       <span style={{ color: comment.favor ? '#228B22' : '#B22222', marginLeft: 8 }}>
                         {comment.favor ? '👍' : '👎'}
