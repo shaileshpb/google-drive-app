@@ -179,7 +179,7 @@ const App: React.FC = () => {
 
   // --- UI: Show user profile page if open ---
   if (profileOpen && user) {
-    return <UserProfile user={user} />;
+    return <UserProfile user={user} onClose={() => setProfileOpen(false)} />;
   }
 
   if (loading) return <div className="App"><div className="post-tile">Loading...</div></div>;

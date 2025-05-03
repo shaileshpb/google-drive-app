@@ -7,6 +7,7 @@ interface UserProfileProps {
     picture?: string;
     createdAt?: string;
   };
+  onClose: () => void;
 }
 
 function daysSince(dateString?: string) {
@@ -17,10 +18,11 @@ function daysSince(dateString?: string) {
   return diff;
 }
 
-const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
+const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
   return (
     <div className="user-profile-page">
       <div className="user-profile-card">
+        <button className="user-profile-close" onClick={onClose} title="Close">×</button>
         {user.picture && <img src={user.picture} alt={user.name} className="user-profile-avatar" />}
         <h2>{user.name}</h2>
         <p className="user-profile-email">{user.email}</p>

@@ -237,6 +237,7 @@
   flex-direction: column;
   align-items: center;
   gap: 1.2rem;
+  position: relative;
 }
 
 .user-profile-avatar {
@@ -264,6 +265,23 @@
   color: #888;
   font-size: 1rem;
   text-align: center;
+}
+
+.user-profile-close {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  background: transparent;
+  border: none;
+  font-size: 2rem;
+  color: #888;
+  cursor: pointer;
+  transition: color 0.15s;
+  z-index: 2;
+}
+
+.user-profile-close:hover {
+  color: #d32f2f;
 }
 
 @keyframes spin {
