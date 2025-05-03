@@ -45,6 +45,11 @@ const App: React.FC = () => {
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  // --- Comment State ---
+  const [commentInputs, setCommentInputs] = useState<{ [key: string]: string }>({});
+  const [commentLoading, setCommentLoading] = useState<{ [key: string]: boolean }>({});
+  const [commentError, setCommentError] = useState<{ [key: string]: string }>({});
+
   // Persist user in localStorage
   useEffect(() => {
     const storedUser = localStorage.getItem('dd_user');
@@ -187,6 +192,50 @@ const App: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  // Handle comment input change
+  const handleCommentInputChange = (postIdx: number, value: string) => {
+    setCommentInputs((prev) => ({ ...prev, [postIdx]: value }));
+  };
+
+  // Handle comment submit
+  const handleCommentSubmit = async (postIdx: number) => {
+    if (!user) {
+      setCommentError((prev) => ({ ...prev, [postIdx]: 'You must be logged in to comment.' }));
+      return;
+    }
+    const commentText = commentInputs[postIdx]?.trim();
+    if (!commentText) {
+      setCommentError((prev) => ({ ...prev, [postIdx]: 'Comment cannot be empty.' }));
+      return;
+    }
+    setCommentLoading((prev) => ({ ...prev, [postIdx]: true }));
+    setCommentError((prev) => ({ ...prev, [postIdx]: '' }));
+    try {
+      const post = posts[postIdx];
+      const res = await fetch(`${API_PREFIX}/add-comment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          timestamp: post.timestamp,
+          comment: {
+            user: user.name,
+            avatar: user.picture || '',
+            comment: commentText,
+            favor: true
+          }
+        })
+      });
+      if (!res.ok) throw new Error('Failed to add comment.');
+      // Reload posts
+      await fetchAllPosts();
+      setCommentInputs((prev) => ({ ...prev, [postIdx]: '' }));
+    } catch (e: any) {
+      setCommentError((prev) => ({ ...prev, [postIdx]: e.message || 'Failed to add comment.' }));
+    } finally {
+      setCommentLoading((prev) => ({ ...prev, [postIdx]: false }));
+    }
+  };
+
   // --- UI: Show Google Login if not authenticated ---
   if (!user) {
     return (
@@ -296,6 +345,31 @@ const App: React.FC = () => {
                   <li style={{ color: '#888', fontStyle: 'italic' }}>No comments yet.</li>
                 )}
               </ul>
+              <form
+                onSubmit={e => { e.preventDefault(); handleCommentSubmit(idx); }}
+                style={{ display: 'flex', gap: 8, marginTop: 8 }}
+              >
+                <input
+                  type="text"
+                  className="comment-input"
+                  placeholder="Add a comment..."
+                  value={commentInputs[idx] || ''}
+                  onChange={e => handleCommentInputChange(idx, e.target.value)}
+                  disabled={commentLoading[idx]}
+                  maxLength={200}
+                  style={{ flex: 1 }}
+                />
+                <button
+                  className="comment-submit"
+                  type="submit"
+                  disabled={commentLoading[idx] || !user}
+                >
+                  {commentLoading[idx] ? '...' : 'Post'}
+                </button>
+              </form>
+              {commentError[idx] && (
+                <div style={{ color: 'red', fontSize: 13, marginTop: 3 }}>{commentError[idx]}</div>
+              )}
             </div>
           </div>
         </div>

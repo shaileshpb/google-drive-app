@@ -229,6 +229,54 @@ app.post('/api/user-post', async (req, res) => {
   }
 });
 
+// Endpoint to add a comment to a post
+app.post('/api/add-comment', async (req, res) => {
+  try {
+    const { timestamp, comment } = req.body;
+    if (!timestamp || !comment) {
+      return res.status(400).json({ error: 'Missing timestamp or comment.' });
+    }
+    const auth = await getAuth();
+    // Fetch all posts
+    const response = await sheets.spreadsheets.values.get({
+      auth,
+      spreadsheetId,
+      range: 'Sheet1',
+    });
+    const rows = response.data.values || [];
+    if (rows.length < 2) return res.status(404).json({ error: 'No posts found.' });
+    const header = rows[0];
+    let updated = false;
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (row[0] === timestamp) {
+        // Comments are in col 8 (index 7)
+        let comments = [];
+        try {
+          comments = row[7] ? JSON.parse(row[7]) : [];
+        } catch { comments = []; }
+        comments.push(comment);
+        row[7] = JSON.stringify(comments);
+        // Update the row in the sheet
+        await sheets.spreadsheets.values.update({
+          auth,
+          spreadsheetId,
+          range: `Sheet1!A${i+1}:H${i+1}`,
+          valueInputOption: 'USER_ENTERED',
+          requestBody: { values: [row] }
+        });
+        updated = true;
+        break;
+      }
+    }
+    if (!updated) return res.status(404).json({ error: 'Post not found.' });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Add comment error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.use('/api/auth', authRouter);
 
 // Schedule post creation every hour
