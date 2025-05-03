@@ -161,21 +161,23 @@ const App: React.FC = () => {
         }),
       });
       if (!res.ok) throw new Error('Failed to post news');
+      const data = await res.json();
+      // Create the new post object (simulate as backend returns only success)
+      const newPost: Post = {
+        timestamp: new Date().toISOString(),
+        title: newPostText,
+        image: newPostImage,
+        url: '',
+        userName: user?.name || '',
+        likes: 0,
+        dislikes: 0,
+        comments: [],
+      };
+      setPosts(prev => [newPost, ...prev]);
       setShowNewPost(false);
       setNewPostText('');
       setNewPostImage('');
       if (fileInputRef.current) fileInputRef.current.value = '';
-      // Fetch posts again
-      setLoading(true);
-      const postsRes = await fetch(`${API_PREFIX}/all-posts`);
-      const postsData = await postsRes.json();
-      const sortedPosts = (postsData.posts || []).slice().sort((a: Post, b: Post) => {
-        const dateA = new Date(a.timestamp).getTime();
-        const dateB = new Date(b.timestamp).getTime();
-        return dateB - dateA;
-      });
-      setPosts(sortedPosts);
-      setLoading(false);
     } catch (err: any) {
       setPostError(err.message || 'Failed to post news.');
     } finally {
@@ -219,15 +221,23 @@ const App: React.FC = () => {
           timestamp: post.timestamp,
           comment: {
             user: user.name,
-            avatar: user.picture || '',
+            avatar: '',
             comment: commentText,
             favor: true
           }
         })
       });
       if (!res.ok) throw new Error('Failed to add comment.');
-      // Reload posts
-      await fetchAllPosts();
+      // Update only the comments for this post in UI
+      setPosts(prev => prev.map((p, idx) => idx === postIdx ? {
+        ...p,
+        comments: [...(p.comments || []), {
+          user: user.name,
+          avatar: '',
+          comment: commentText,
+          favor: true
+        }]
+      } : p));
       setCommentInputs((prev) => ({ ...prev, [postIdx]: '' }));
     } catch (e: any) {
       setCommentError((prev) => ({ ...prev, [postIdx]: e.message || 'Failed to add comment.' }));
