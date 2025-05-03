@@ -176,9 +176,10 @@ app.get('/api/all-posts', async (req, res) => {
       title: row[1],
       image: row[2],
       url: row[3],
-      likes: Number(row[4]),
-      dislikes: Number(row[5]),
-      comments: row[6] ? JSON.parse(row[6]) : [],
+      userName: row[4] || '',
+      likes: Number(row[5]),
+      dislikes: Number(row[6]),
+      comments: row[7] ? JSON.parse(row[7]) : [],
     }));
     res.json({ posts });
   } catch (err) {
