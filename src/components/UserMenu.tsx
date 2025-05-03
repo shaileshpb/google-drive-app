@@ -6,15 +6,19 @@ interface UserMenuProps {
     picture?: string;
   };
   onProfile: () => void;
+  onLogout?: () => void;
 }
 
-const UserMenu: React.FC<UserMenuProps> = ({ user, onProfile }) => {
+const UserMenu: React.FC<UserMenuProps> = ({ user, onProfile, onLogout }) => {
   return (
-    <div className="user-menu" onClick={onProfile} title="User settings">
+    <div className="user-menu" title="User settings">
       {user.picture ? (
-        <img src={user.picture} alt={user.name} className="user-menu-avatar" />
+        <img src={user.picture} alt={user.name} className="user-menu-avatar" onClick={onProfile} />
       ) : (
-        <div className="user-menu-avatar user-menu-initials">{user.name[0]}</div>
+        <div className="user-menu-avatar user-menu-initials" onClick={onProfile}>{user.name[0]}</div>
+      )}
+      {onLogout && (
+        <button className="user-menu-logout" onClick={e => { e.stopPropagation(); onLogout(); }} title="Logout">Logout</button>
       )}
     </div>
   );

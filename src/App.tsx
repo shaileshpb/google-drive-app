@@ -45,6 +45,24 @@ const App: React.FC = () => {
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  // Persist user in localStorage
+  useEffect(() => {
+    const storedUser = localStorage.getItem('dd_user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('dd_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('dd_user');
+    }
+  }, [user]);
+
   // Handle Google login success
   const handleGoogleLogin = async (credential: string) => {
     try {
@@ -60,6 +78,13 @@ const App: React.FC = () => {
     } catch (e) {
       setAuthError('Google authentication failed.');
     }
+  };
+
+  // Logout function
+  const handleLogout = () => {
+    setUser(null);
+    setProfileOpen(false);
+    localStorage.removeItem('dd_user');
   };
 
   // Move fetchAllPosts to top-level so it can be used in multiple hooks
@@ -192,7 +217,7 @@ const App: React.FC = () => {
       <header className="app-header">
         <h1 className="app-title">Direct Democracy</h1>
         <div className="app-header-right">
-          <UserMenu user={user} onProfile={() => setProfileOpen(true)} />
+          <UserMenu user={user} onProfile={() => setProfileOpen(true)} onLogout={handleLogout} />
         </div>
       </header>
       {/* New Post UI */}
