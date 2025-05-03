@@ -118,11 +118,38 @@ const App: React.FC = () => {
     fetchAllPosts();
   }, []);
 
-  // Periodically refresh posts every 30 seconds
+  // Real-time polling for posts and comments
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchAllPosts();
-    }, 30000); // 30 seconds
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_PREFIX}/all-posts`);
+        const data = await res.json();
+        const sortedPosts = (data.posts || []).slice().sort((a: Post, b: Post) => {
+          const dateA = new Date(a.timestamp).getTime();
+          const dateB = new Date(b.timestamp).getTime();
+          return dateB - dateA;
+        });
+        setPosts(prevPosts => {
+          // Only update if posts or comments have changed
+          if (prevPosts.length !== sortedPosts.length) return sortedPosts;
+          for (let i = 0; i < prevPosts.length; i++) {
+            if (
+              prevPosts[i].timestamp !== sortedPosts[i].timestamp ||
+              prevPosts[i].title !== sortedPosts[i].title ||
+              prevPosts[i].image !== sortedPosts[i].image ||
+              prevPosts[i].url !== sortedPosts[i].url ||
+              prevPosts[i].userName !== sortedPosts[i].userName ||
+              prevPosts[i].likes !== sortedPosts[i].likes ||
+              prevPosts[i].dislikes !== sortedPosts[i].dislikes ||
+              JSON.stringify(prevPosts[i].comments) !== JSON.stringify(sortedPosts[i].comments)
+            ) {
+              return sortedPosts;
+            }
+          }
+          return prevPosts;
+        });
+      } catch {}
+    }, 5000); // 5 seconds
     return () => clearInterval(interval);
   }, []);
 
