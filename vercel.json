@@ -12,6 +12,7 @@
     { "src": "/favicon.ico", "dest": "/favicon.ico" },
     { "src": "/robots.txt", "dest": "/robots.txt" },
     { "src": "/user-avatar.png", "dest": "/user-avatar.png" },
+    { "src": "/revolution.avif", "dest": "/revolution.avif" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
